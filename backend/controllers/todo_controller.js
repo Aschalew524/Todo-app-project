@@ -10,14 +10,16 @@ exports.getAllTodos = async (req, res) => {
 };
 
 exports.createTodo = async (req, res) => {
-  const todo = new Todo(req.body);
+  console.log('Request Body:', req.body); 
   try {
+    const todo = new Todo(req.body);
     const savedTodo = await todo.save();
     res.status(201).json(savedTodo);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
+
 
 
 exports.updateTodo = async (req, res) => {
