@@ -12,7 +12,7 @@ class SignInScreen extends StatelessWidget {
             const SizedBox(height: 50),
 
               Text(
-                "Welcome OnBoard!",
+                "Welcome Back!",
                 style: GoogleFonts.poppins(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
