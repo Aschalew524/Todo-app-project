@@ -1,11 +1,16 @@
-const express = require('express');
+const express = require("express");
+const { getAllTodos, createTodo, updateTodo, deleteTodo } = require("../controllers/todo_controller");
+const validateToken = require("../middleware/validateTokenHandler");
+
 const router = express.Router();
 
-const todoController = require('../controllers/todo_controller');
+// Apply validateToken middleware to protect routes
+router.use(validateToken);
 
-router.get('/todos', todoController.getAllTodos);
-router.post('/todos', todoController.createTodo);
-router.put('/todos/:id', todoController.updateTodo);
-router.delete('/todos/:id', todoController.deleteTodo);
+// Define routes
+router.get("/", getAllTodos); // GET /api/todos
+router.post("/", createTodo); // POST /api/todos
+router.put("/:id", updateTodo); // PUT /api/todos/:id
+router.delete("/:id", deleteTodo); // DELETE /api/todos/:id
 
-module.exports = router;
+module.exports = router;  //
