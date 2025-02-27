@@ -37,38 +37,48 @@ const registerUser = asyncHandler(async (req, res) => {
 
 
 const loginUser = asyncHandler(async (req, res) => {
-   const { email, password } = req.body;
+    const { email, password } = req.body;
 
-   // Validate input fields
-   if (!email || !password) {
-       res.status(400);
-       throw new Error("Please enter all fields");
-   }
+    // Validate input fields
+    if (!email || !password) {
+        return res.status(400).json({ message: "Please enter both email and password" });
+    }
 
-   // Find the user
-   const user = await User.findOne({ email });
+    // Find the user
+    const user = await User.findOne({ email });
 
-   // Compare passwords
-   if (user && (await bcrypt.compare(password, user.password))) {
-       const accessToken = jwt.sign(
-           {
-               user: {
-                   user_name: user.user_name,
-                   email: user.email,
-                   id: user.id,
-               },
-           },
-           process.env.ACCESS_TOKEN_SECRET,
-           { expiresIn: "30m" }
-       );
+    if (!user) {
+        // 🔹 User not found (Wrong email)
+        return res.status(401).json({ message: "Invalid email or password" });
+    }
 
-       // Send response with token and user details
-       res.status(200).json({ accessToken, user: { id: user.id, email: user.email, user_name: user.user_name } });
-   } else {
-       res.status(400);
-       throw new Error("Invalid email or password");
-   }
+    // Compare passwords
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+        // 🔹 Password incorrect
+        return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // 🔹 Generate access token
+    const accessToken = jwt.sign(
+        {
+            user: {
+                user_name: user.user_name,
+                email: user.email,
+                id: user.id,
+            },
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "30m" }
+    );
+
+    // 🔹 Return token and user data
+    res.status(200).json({ 
+        accessToken, 
+        user: { id: user.id, email: user.email, user_name: user.user_name } 
+    });
 });
+
 
 
 const currentUser = asyncHandler(async (req, res) => {
