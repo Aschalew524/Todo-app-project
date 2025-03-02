@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:todo_frontend/api_service.dart';
 
 class CreateTodoPage extends StatefulWidget {
+  const CreateTodoPage({super.key});
+
   @override
   _CreateTodoPageState createState() => _CreateTodoPageState();
 }
@@ -8,6 +11,36 @@ class CreateTodoPage extends StatefulWidget {
 class _CreateTodoPageState extends State<CreateTodoPage> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  bool isLoading = false; // Loading state for button
+
+  Future<void> _saveTask() async {
+    String title = titleController.text.trim();
+    String description = descriptionController.text.trim();
+
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Title cannot be empty!')),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    bool success = await ApiService.createTodo(title, description);
+
+    setState(() => isLoading = false);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Task created successfully!")),
+      );
+      Navigator.pop(context, true); // Go back to home screen and refresh
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to create task!")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,11 +48,7 @@ class _CreateTodoPageState extends State<CreateTodoPage> {
       appBar: AppBar(
         title: const Text(
           'Create New Task',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: Colors.blue,
         elevation: 0,
@@ -41,9 +70,7 @@ class _CreateTodoPageState extends State<CreateTodoPage> {
               // Title Field
               Card(
                 elevation: 5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: TextField(
@@ -55,18 +82,16 @@ class _CreateTodoPageState extends State<CreateTodoPage> {
                       hintText: 'Enter task title',
                       hintStyle: TextStyle(color: Colors.grey),
                     ),
-                    style: TextStyle(fontSize: 18),
+                    style: const TextStyle(fontSize: 18),
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Description Field
               Card(
                 elevation: 5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: TextField(
@@ -79,39 +104,26 @@ class _CreateTodoPageState extends State<CreateTodoPage> {
                       hintStyle: TextStyle(color: Colors.grey),
                     ),
                     maxLines: 5,
-                    style: TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
 
               // Save Button
               ElevatedButton(
-                onPressed: () {
-                  // Save the new task
-                  final title = titleController.text;
-                  final description = descriptionController.text;
-
-                  if (title.isNotEmpty && description.isNotEmpty) {
-                    // TODO: Save the task (e.g., send to backend)
-                    Navigator.pop(context); // Go back to the home screen
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Please fill in all fields')),
-                    );
-                  }
-                },
+                onPressed: isLoading ? null : _saveTask,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Text(
-                  'Save Task',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Save Task',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
               ),
             ],
           ),

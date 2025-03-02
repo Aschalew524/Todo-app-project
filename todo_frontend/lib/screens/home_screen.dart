@@ -1,7 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:todo_frontend/api_service.dart';
+import 'package:todo_frontend/screens/detailsPage.dart';
+
+// Import your API service
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<dynamic> tasks = []; // Stores fetched tasks
+  bool isLoading = true; // Controls loading indicator
+
+  @override
+@override
+void initState() {
+  super.initState();
+  debugToken();
+  fetchUserTasks();
+}
+
+Future<void> debugToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+  print("🛠️ Retrieved Token: $token");
+}
 
 
-class HomeScreen extends StatelessWidget {
+  // Fetch tasks from the API
+  Future<void> fetchUserTasks() async {
+    try {
+      List<dynamic> fetchedTasks = await ApiService.fetchTodos();
+      setState(() {
+        tasks = fetchedTasks;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Error fetching tasks: $e");
+      setState(() => isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,20 +62,19 @@ class HomeScreen extends StatelessWidget {
             ),
             child: const Center(
               child: Column(
-                mainAxisSize: MainAxisSize.min, // Centers the column's content
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   CircleAvatar(
-                    radius: 50, // Adjust the radius for the desired size
-                    backgroundImage: NetworkImage(
-                      "https://via.placeholder.com/150",
-                    ),
+                    radius: 50,
+                    backgroundImage: NetworkImage(""),
                   ),
-                  SizedBox(height: 10), // Space between avatar and text
+                  SizedBox(height: 10),
                   Text(
-                    "Welcome back Aschalew",
+                    "Welcome back, Aschalew",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -51,57 +93,57 @@ class HomeScreen extends StatelessWidget {
           ),
           // Task List Section
           Expanded(
-            child: ListView.builder(
-              itemCount: 7, // Replace with your actual task count
-              itemBuilder: (context, index) {
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  elevation: 3,
-                  child: ListTile(
-                    leading: const Icon(Icons.task, color: Colors.blue), // Task icon
-                    title: Text(
-                      "Task ${index + 1}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      "Description for Task ${index + 1}",
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    trailing: Checkbox(
-                      value: false, // Replace with your task completion state
-                      onChanged: (value) {
-                        // Handle checkbox state change
-                      },
-                    ),
-                    onTap: () {
-                      // Navigate to To-Do Details Screen with task details
-                      Navigator.pushNamed(
-                        context,
-                        '/details',
-                        arguments: {
-                          'title': 'Task ${index + 1}', // Pass task title
-                          'description': 'Description for Task ${index + 1}', // Pass task description
-                          'isCompleted': false, // Pass task status
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator()) // Show loader while fetching
+                : tasks.isEmpty
+                    ? const Center(child: Text("No tasks found"))
+                    : ListView.builder(
+                        itemCount: tasks.length,
+                        itemBuilder: (context, index) {
+                          var task = tasks[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            elevation: 3,
+                            child: ListTile(
+                              leading: const Icon(Icons.task, color: Colors.blue),
+                              title: Text(
+                                task['title'],
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                task['description'] ?? "No description",
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              trailing: Checkbox(
+                                value: task['isCompleted'] ?? false, // Handle task completion
+                                onChanged: (value) {
+                                  // Handle checkbox state change (optional)
+                                },
+                              ),
+                             onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => TodoDetailsPage(todoId: task['_id']),
+    ),
+  );
+},
+                            ),
+                          );
                         },
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
+                      ),
           ),
         ],
       ),
-      // Floating Action Button (FAB)
+      // Floating Action Button
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigate to Create To-Do Screen
           Navigator.pushNamed(context, '/create');
         },
         backgroundColor: Colors.blue,

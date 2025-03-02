@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:todo_frontend/api_service.dart';  // Import API service
+import 'package:todo_frontend/api_service.dart'; // Import API service
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 
 class SignInScreen extends StatefulWidget {
+  const SignInScreen({super.key});
+
   @override
   _SignInScreenState createState() => _SignInScreenState();
 }
@@ -14,7 +15,6 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  // Function to handle sign-in
   void loginUser(BuildContext context) async {
   String email = emailController.text.trim();
   String password = passwordController.text.trim();
@@ -25,56 +25,22 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   try {
-    final response = await ApiService.signIn(email, password);
+    final result = await ApiService.signIn(email, password);
 
-    if (response == null) {
-      showAlertDialog(context, "🚨 Server is not responding. Please try again later.");
-      return;
-    }
-
-    print("Response Status Code: ${response.statusCode}");
-    print("Response Body: ${response.body}"); // Debugging output
-
-    final Map<String, dynamic> responseData = jsonDecode(response.body);
-
-    // 🔹 **Handle incorrect credentials (401)**
-    if (response.statusCode == 401) {
+    if (result == null || !result['success']) {
       showAlertDialog(context, "❌ Invalid email or password!");
       return;
     }
 
-    // 🔹 **Handle other bad requests (400)**
-    if (response.statusCode == 400) {
-      String errorMessage = responseData['message'] ?? "Invalid input. Please try again.";
-      showAlertDialog(context, "❌ $errorMessage");
-      return;
-    }
+    print("✅ Token: ${result['token']}");
+    print("👤 User: ${result['user']}");
 
-    // 🔹 **Handle server errors (500)**
-    if (response.statusCode >= 500) {
-      showAlertDialog(context, "🚨 Server error. Please try again later.");
-      return;
-    }
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("✅ Login successful!")));
 
-    // ✅ **Login successful**
-    if (response.statusCode == 200 && responseData.containsKey('accessToken')) {
-      String token = responseData['accessToken'];
-
-      // ✅ Save token for future requests
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("✅ Login successful!")),
-      );
-
-      Navigator.pushReplacementNamed(context, '/home'); // Navigate to home
-    } else {
-      showAlertDialog(context, "❌ Unexpected response from server. Please try again.");
-    }
+    Navigator.pushReplacementNamed(context, '/home'); // Navigate to home
   } catch (e) {
-    print("❌ Error: $e"); // Debugging output
-    showAlertDialog(context, "⚠️ An unexpected error occurred. Please check your connection and try again.");
+    print("🚨 Sign-In Error: $e");
+    showAlertDialog(context, "⚠️ An unexpected error occurred. Please try again.");
   }
 }
 
@@ -171,7 +137,7 @@ class _SignInScreenState extends State<SignInScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Don't have an account? "),
+              const Text("Don't have an account? "),
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(context, '/signup');

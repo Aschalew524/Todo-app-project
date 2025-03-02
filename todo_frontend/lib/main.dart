@@ -12,6 +12,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -19,13 +21,11 @@ class MyApp extends StatelessWidget {
       initialRoute: '/signin', // Start with the Sign-In screen
       routes: {
         '/signin': (context) => SignInScreen(), // Sign-In route
-        '/signup': (context) => SignupScreen(), // Sign-Up route
+        '/signup': (context) => const SignupScreen(), // Sign-Up route
         '/home': (context) => HomeScreen(), // Home route
         '/create': (context) => CreateTodoPage(), // Create To-Do route
-        '/details': (context) => const TodoDetailsPage(
-              title: 'Sample Task', // Pass sample data for now
-              description: 'This is a sample task description.',
-              isCompleted: false,
+        '/details': (context) => const TodoDetailsPage(todoId: '',
+              
             ), // To-Do Details route
       },
     );
